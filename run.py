@@ -1,9 +1,15 @@
 # Phil's Universal Terminal
 # Github: https://github.com/MineFartS/Universal-Terminal/
 
-version = 'Beta '+str(1.3)
+version = 'Beta '+str(1.4)
 
 last_updated = '2025-02-28'
+
+#========================================================
+
+#========================================================
+#               Startup Handlers
+#          (and some early functions):
 
 try:
     import subprocess, sys, os, time, requests
@@ -27,40 +33,61 @@ def restart(parameters=[]):
     else:
         exit()
 
-def dash(percent=100,doPrint=True):
+def dash(percent=100,pad=False):
     x = 0
     dash = ''
     while x < os.get_terminal_size().columns*[percent/100][0]:
         dash += '-'
         x += 1
-    if doPrint: print(dash)
+    if pad: print('\n'+dash+'\n')
+    else: print(dash)
     return dash
 
 # Check if session restarted
 params = sys.argv[1:999]
-if '--restart' in params:
-    params.remove('--restart')
-else:
-    if '--hidden-exec' in params:
-        params.remove('--hidden-exec')
-    else:
-        # Print Script Title
-        os.system('cls' if os.name == 'nt' else 'clear')
 
-        dash()
-        print("\nThe Universal Terminal (v"+str(version)+")\n")
-        dash()
+if not '--restart' in params and not '--hidden-exec' in params:
+    # Print Script Title
+    os.system('cls' if os.name == 'nt' else 'clear')
+    dash()
+    print("\nThe Universal Terminal ("+str(version)+")\n")
+    dash()
+
+remove_args = ['--restart','--hidden-exec','--display-help-message','--list-phrases']
+
+for arg in remove_args:
+    if arg in params:
+        params.remove(arg)
 
 # Ask for parameters input if none passed through OS's CL
 if len(params) == 0:
-    params = input('Universal Terminal > ').split(' ')
+    params = input('\nUniversal Terminal \\> ').split(' ')
 else:
     if not '--restart' in sys.argv: Allow_Restart = False
 
-all_commands = []
+#========================================================
 
-# Function to simplify the process of creating new commands
+#========================================================
+#               Global Variables:
+
+all_commands = []
+help_commands = []
+
+# Get OS type (Windows/Unix)
+OS = {True:'Windows',False:'Unix'}[os.name == 'nt']
+
+ScriptPath = sys.path[0] + {'Windows':'\\','Unix':'/'}[OS] + sys.argv[0]
+
+#========================================================
+#               Functions for Commands To Call:
+
+# Simplifies the process of creating new commands
 def Param(names,index=0):
+    if '--list-phrases' in sys.argv:
+        if params[0] in names:
+            print('\nAlternative commands for "'+params[0]+'":\n'+ListifyArray(names))
+            restart()        
+    help_commands.append(names[0])
     for name in names:
         all_commands.append(name)
         if name.capitalize() == params[index].capitalize(): return True
@@ -69,9 +96,6 @@ def Param(names,index=0):
 # Gets a range of Parameters as plain text
 def ParamText(min,max):
     return str(params[min:max]).replace('[','').replace(']','').replace("'",'').replace(',','')
-
-# Get OS type (Windows/Unix)
-OS = {True:'Windows',False:'Unix'}[os.name == 'nt']
 
 # Run command in os terminal
 def terminal(command):
@@ -96,7 +120,24 @@ def GetPathInput(start=1):
         return ParamText(start,999).split('"')[1]
     except:
         return ParamText(1,999)
+    
+def help(message):
+    if '--display-help-message' in sys.argv:
+        print(message)
+        restart()
 
+def ListifyArray(array):
+    return str(array)[1:-1].replace("'",'').replace(', ','\n')
+
+def clear():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+#========================================================
+
+#========================================================
+#               Terminal Commands:
+
+# [about] - Displays details about this script
 if Param(['about','ver']):
     dash(40)
     print('The Universal Terminal')
@@ -111,15 +152,15 @@ if Param(['about','ver']):
     print('Github: "https://github.com/minefarts/universal-terminal"')
     dash(40)
 
-
-# Clears the terminal window
+# [Clear] - Clears the terminal window
 if Param(['cls','clear'],0):
-    os.system('cls' if os.name == 'nt' else 'clear')
+    clear()
 
-# Exit with certain parameters
+# [Exit] - Exit with certain parameters
 if Param(['exit','quit','leave','end','close','exit()','return'],0):
     Allow_Restart = False
 
+# [Update] - Updates the script frm GitHub
 if Param(['update']):
     print('Fetching latest version from github ... ')
     code = requests.get('https://raw.githubusercontent.com/MineFartS/Universal-Terminal/refs/heads/main/run.py').text
@@ -127,23 +168,28 @@ if Param(['update']):
     open(sys.argv[0],'w').write(code)
     print('Update Complete')
 
-# Show help options if run with 'help' parameter
-if Param(['help','/?','-h','-help','?','Help'],0):
-    print("** Help Message Will Go Here **")
-
+# [os] - Runs commands with the computer's default terminal
 # Run command in OS's terminal
-if Param(['os','terminal','term','cmd','bash'],0):
+if Param(['run','os','terminal','term','cmd','bash'],0):
     terminal(ParamText(1,999))
 
-# echo
-if Param(['echo','say','repeat'],0):
+# [echo] - Echoes text back
+if Param(['echo','say','repeat','write','text'],0):
+    help(
+"""Two Methods:
+'echo [text]' - writes text to the console
+'echo "[text]">[file]' - writes text to a file
+""")
+    #Unfinished -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     input = ParamText(1,999)
     if '>' in input:
-        text, file = input.split()
-    print(input.split('>')[0])
+        text, file = input.split('>')
+        open(file,'a').write('\n'+text.split('"')[1])
+    else:
+        print(input)
 
-# Waits for a certain # of seconds
-if Param(['timeout','wait','sleep','hold'],0):
+# [wait] - Waits for a certain # of seconds
+if Param(['wait','timeout','sleep','hold'],0):
     x = 1
     y = int(params[1])
     while x < y+1:
@@ -152,46 +198,48 @@ if Param(['timeout','wait','sleep','hold'],0):
         time.sleep(1)
         x += 1
 
-# Run text file with list of commands for this terminal (like a batch file)
-if Param(['script','call','run','execute']):
+# [call] - Runs List of commands from text file
+if Param(['call','script','execute']):
     file = GetPathInput(1)
     for line in open(file,'r+').read().splitlines():
         args = [sys.executable, sys.argv[0],'--hidden-exec']
-        for part in line.replace('\n','').split(' '): # Fix \\ ------------
+        for part in line.replace('\n','').split(' '):
             args.append(part)
         subprocess.call(args)
         if '-pause' in params:
             Pause()
 
-# Delete file or folder
-if Param(['del','rm','delete','remove','wipe'],0):
+# [delete] - Delete file or directory
+if Param(['delete','rm','del','remove'],0):
+    help('Help for del')
     path = ParamText(1,999).split('"')[1]
     try:
         os.remove(path)
     except:
         os.removedirs(path)
 
-# Pause
+# [pause] - Pauses session
 if Param(['pause','stop','halt','freeze']):
     Pause()
 
-# Python
-if Param(['py','py3','python','python3']):
+# [python] - Runs Python
+if Param(['python','py3','py','python3']):
     args = [sys.executable]
     for p in params[1:]:
         args.append(p)
     subprocess.call(args)
 
-# Pip
+# [pip] - Runs Pip
 if Param(['pip','pip3']):
     args = [sys.executable,'-m','pip']
     for p in params[1:]:
         args.append(p)
     subprocess.call(args)
 
-# Change Directory
+# [cd] - Change Directory
 if Param(['cd']):
-    # Unfinished
+    restart()
+    #Unfinished -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     dir = GetPathInput()
     print(dir)
     if OS == 'Windows':
@@ -200,20 +248,63 @@ if Param(['cd']):
         os.system('cd '+dir)
 
 # List Directory Contents
-if Param(['dir']):
-    #Unfinished
+if Param(['list','dir','ls']):
+    restart()
+    #Unfinished -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     if OS == 'Windows':
         os.system("echo Current Directory: %cd%")
-        print('------------------')
+        dash(15)
         os.system('dir')
     else:
         os.system('echo Current Directory: ')
-        print('------------------')
+        dash(15)
         os.system('ls')
 
-# To add: write to file, create file, edit file
+# Add shortcut to system32, etc.
+if Param(['AddToPath']):
+    restart()
+    #Unfinished -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    if OS=='Windows':
+        terminal('copy "'+ScriptPath+'"'+file+'"C:\\Windows\\System32\\UnivTerm.py"')
+        file = open('C:\\Windows\\System32\\UT.bat','w').write('python UnivTerm.py')
 
-# --------------------------------------------------------------------------------------
+# To Do: create file, create dir, edit file, open file
+
+#========================================================
+
+#========================================================
+#                   Help Message
+
+if Param(['help','/?','-h','-help','?','Help'],0):
+    if len(params) == 1: 
+        dash(15,True)
+        print("Commands:\n")
+        print(ListifyArray(help_commands))
+        dash(15,True)
+        print('Try Running "help [command]" for more detailed information')
+        dash(15,True)
+        print('Some commands have alternatine phrase')
+        print('Try running "help -alt [command]" to list them')
+        dash(15,True)
+        print('Note: While in beta, some commands might not have help options, any may error if run')
+        restart()
+    else:
+        if Param(['-alt','-list','-phrases','-other'],1):
+            restart([params[2],'--list-phrases'])
+        else:
+            restart([params[1],'--display-help-message'])
+
+#========================================================
+
+#========================================================
+#                   Handle Restart
+
 if not params[0] in all_commands:
-    restart(['help'])
+    print('')
+    dash(50)
+    print('Error: Invalid Syntax or Command')
+    print('Run "help" for a list of Commands')
+    dash(50)
+    restart()
 else: restart()
+#========================================================
