@@ -1,6 +1,6 @@
 import subprocess, sys, os, time
 
-version = 1.1
+version = 1.2
 
 # Function to restart the script
 Allow_Restart = True
@@ -27,7 +27,7 @@ else:
 
 # Ask for parameters input if none passed through OS's CL
 if len(params) == 0:
-    params = input(' Console > ').split(' ')
+    params = input('Universal Terminal > ').split(' ')
 else:
     if not '--restart' in sys.argv: Allow_Restart = False
 
@@ -107,7 +107,7 @@ if Param(['script','call','run','execute']):
             Pause()
 
 # Delete file or folder
-if Param(['del','rm','delete','remove','clear','wipe'],0):
+if Param(['del','rm','delete','remove','wipe'],0):
     path = ParamText(1,999).split('"')[1]
     try:
         os.remove(path)
@@ -131,6 +131,8 @@ if Param(['pip','pip3']):
     for p in params[1:]:
         args.append(p)
     subprocess.call(args)
+
+# To add: write to file, create file, edit file, current directory/change directory
 
 # --------------------------------------------------------------------------------------
 if not params[0] in all_commands:
