@@ -1,7 +1,7 @@
 # Phil's Universal Terminal
 # Github: https://github.com/MineFartS/Universal-Terminal/
 
-version = 'Beta '+str(1.4)
+version = 'Beta '+str(1.5)
 
 last_updated = '2025-02-28'
 
@@ -94,7 +94,7 @@ def Param(names,index=0):
     return False
 
 # Gets a range of Parameters as plain text
-def ParamText(min,max):
+def ParamText(min=1,max=999):
     return str(params[min:max]).replace('[','').replace(']','').replace("'",'').replace(',','')
 
 # Run command in os terminal
@@ -132,10 +132,26 @@ def ListifyArray(array):
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+def command(parameters=[]):
+    args = [sys.executable, sys.argv[0],'--hidden-exec']
+    for p in parameters:
+        args.append(str(p))
+    subprocess.call(args)
+
 #========================================================
 
 #========================================================
 #               Terminal Commands:
+
+if '&&' in params:
+    cmds = ParamText(0).split('&&')
+    for c in cmds:
+        args = [sys.executable, sys.argv[0],'--hidden-exec']
+        parts = c.split(' ')
+        for part in parts:
+            if not part == '': args.append(part)
+        subprocess.call(args)
+    restart()
 
 # [about] - Displays details about this script
 if Param(['about','ver']):
@@ -160,7 +176,7 @@ if Param(['cls','clear'],0):
 if Param(['exit','quit','leave','end','close','exit()','return'],0):
     Allow_Restart = False
 
-# [Update] - Updates the script frm GitHub
+# [Update] - Updates the script form GitHub
 if Param(['update']):
     print('Fetching latest version from github ... ')
     code = requests.get('https://raw.githubusercontent.com/MineFartS/Universal-Terminal/refs/heads/main/run.py').text
@@ -180,7 +196,6 @@ if Param(['echo','say','repeat','write','text'],0):
 'echo [text]' - writes text to the console
 'echo "[text]">[file]' - writes text to a file
 """)
-    #Unfinished -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     input = ParamText(1,999)
     if '>' in input:
         text, file = input.split('>')
@@ -211,8 +226,11 @@ if Param(['call','script','execute']):
 
 # [delete] - Delete file or directory
 if Param(['delete','rm','del','remove'],0):
-    help('Help for del')
-    path = ParamText(1,999).split('"')[1]
+    help('delete [file|folder]')
+    if '"' in ParamText():
+        path = ParamText().split('"')[1]
+    else:
+        path = ParamText()
     try:
         os.remove(path)
     except:
@@ -268,7 +286,41 @@ if Param(['AddToPath']):
         terminal('copy "'+ScriptPath+'"'+file+'"C:\\Windows\\System32\\UnivTerm.py"')
         file = open('C:\\Windows\\System32\\UT.bat','w').write('python UnivTerm.py')
 
-# To Do: create file, create dir, edit file, open file
+if Param(['ping']):
+    if '-n' in params:
+        count = NextParam('-n')
+        params.remove('-n')
+        params.remove(count)
+    else:
+        count = '4'
+    if OS=='Windows':
+        terminal('ping -n '+count+' '+params[1])
+    else:
+        terminal('ping -c '+count+' '+params[1])
+
+if Param(['power']):
+    restart()
+    #Unfinished -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    if '-t' in params:
+        time = int(NextParam('-t'))
+        params.remove('-t')
+    else:
+        time = 30
+    power = {'off':0,'on':1,'restart':2, 'abort':3}[params[1]]
+    print(power)
+    command(['wait',time])
+    if params[0]==1:
+        ""
+
+if Param(['wget','download']):
+    print(ParamText())
+    input = ParamText().split('"')[1:4]
+    
+    r = requests.get(input[0])
+    with open(input[2],'wb') as f:
+        f.write(requests.content)
+
+# To Do: create file, create dir, edit file, open file, wget, shutdown/restart (power), cd, addToPath, list, use cmd output as input
 
 #========================================================
 
@@ -282,11 +334,11 @@ if Param(['help','/?','-h','-help','?','Help'],0):
         print(ListifyArray(help_commands))
         dash(15,True)
         print('Try Running "help [command]" for more detailed information')
+        print('Note: While in beta, some commands might not have help options, any may error if run')
         dash(15,True)
         print('Some commands have alternatine phrase')
         print('Try running "help -alt [command]" to list them')
         dash(15,True)
-        print('Note: While in beta, some commands might not have help options, any may error if run')
         restart()
     else:
         if Param(['-alt','-list','-phrases','-other'],1):
