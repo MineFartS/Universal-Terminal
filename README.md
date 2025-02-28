@@ -18,7 +18,7 @@ Key Features:
 
 To use the Universal Terminal, run `python run.py` in the same directory as the script. No repositories needed.
 
-I haven't made a help page, yet, but I left a lot of comments in the code, so it should be pretty easy to reverse engineer the commands. Just in case you are too lazy, here is a simplified list of the commands:
+I haven't made a help page, yet, but I left a lot of comments in the code, so it should be pretty easy to reverse engineer the commands. Just in case you are too lazy, here is a simplified list of the commands, anyways:
 - cls - Clear
 - exit - Exit
 - help
