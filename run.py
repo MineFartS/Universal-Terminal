@@ -2,7 +2,7 @@
 # Created By: Phil H.
 # Github: https://github.com/MineFartS/Universal-Terminal/
 
-version = 'Beta '+str(1.6)
+version = 'Beta '+str(1.7)
 
 last_updated = '2025-02-28'
 
@@ -14,9 +14,10 @@ error = False
 try:
     try:
         import subprocess, sys, os, time, requests
+        from ping3 import ping
     except:
         import subprocess,sys,os
-        repos = []
+        repos = ['ping']
 
         args = [sys.executable,'-m','pip','install']
         for repo in repos:
@@ -74,42 +75,47 @@ try:
     #                   Global Variables                    #
     #=======================================================#
 
-    # Remove certain arguements from 'params'
-
-
     all_commands = []
     help_commands = []
 
-    # Get OS type (Windows/Unix)
+    # OS type (Windows, Unix)
     OS = {True:'Windows',False:'Unix'}[os.name == 'nt']
 
-    ScriptPath = sys.path[0] + {'Windows':'\\','Unix':'/'}[OS] + sys.argv[0]
+    # OS Slash Type (\, /)
+    Slash = {'Windows':'\\','Unix':'/'}[OS]
+
+    # Path with current script file
+    ScriptPath = sys.path[0] + Slash + sys.argv[0]
 
     #=======================================================#
     #                       Functions                       #
     #=======================================================#
 
+    # [ListifyArray] - Formats an array as a plain text list separated by lines
+    def ListifyArray(array):
+        return str(array)[1:-1].replace("'",'').replace(', ','\n')
+
     # [Param] - Checks if certain parameter is one of many values
     def Param(names,index=0):
-        if '--list-phrases' in sys.argv:
-            if params[0] in names:
-                print('\nAlternative commands for "'+params[0]+'":\n'+ListifyArray(names))
-                restart()
+        if '--list-phrases' in arguements and params[0] in names:
+            print('\nAlternatives to "'+params[0]+'":\n'+ListifyArray(names))
+            restart()
         help_commands.append(names[0])
         for name in names:
             all_commands.append(name)
             if name.capitalize() == params[index].capitalize(): return True
         return False
 
+    # [ParamText] - Gets a range of parameters as plain text
+    def ParamText(min=1,max=999):
+        return str(params[min:max]).replace('[','').replace(']','').replace("'",'').replace(',','')
+
+    # [Flag] - Gets details about a flag in params
     def Flag(flag):
         if not flag in params:
             return [False,'']
         else:
             return [True, params[params.index(flag)+1]]
-
-    # [ParamText] - Gets a range of parameters as plain text
-    def ParamText(min=1,max=999):
-        return str(params[min:max]).replace('[','').replace(']','').replace("'",'').replace(',','')
 
     # [terminal] - Run command in the OS's build in terminal
     def terminal(command):
@@ -138,10 +144,6 @@ try:
         if '--display-help-message' in sys.argv:
             print(message)
             restart()
-
-    # [ListifyArray] - Formats an array as a plain text list separated by lines
-    def ListifyArray(array):
-        return str(array)[1:-1].replace("'",'').replace(', ','\n')
 
     # [clear] - clear the terminal window
     def clear():
@@ -304,7 +306,7 @@ try:
         help()
         os.chdir(ParamText())
 
-    # List Directory Contents
+    # [list] - List Directory Contents
     if Param(['list','dir','ls']):
         help()
         print('')
@@ -314,40 +316,23 @@ try:
             if os.path.isfile(path):
                 print('[  File  ]',path)
 
-    """
-    # Add shortcut to system32, etc.
-    if Param(['AddToPath']):
-        if OS=='Windows':
-            terminal('copy "'+ScriptPath+'"'+file+'"C:\\Windows\\System32\\UnivTerm.py"')
-            file = open('C:\\Windows\\System32\\UT.bat','w').write('python UnivTerm.py')
-
-    if Param(['power']):
-        if '-t' in params:
-            time = int(NextParam('-t'))
-            params.remove('-t')
-        else:
-            time = 30
-        power = {'off':0,'on':1,'restart':2, 'abort':3}[params[1]]
-        print(power)
-        command(['wait',time])
-        if params[0]==1:
-            ""
-    """
+    if Param(['mkdir']):
+        os.makedirs(os.getcwd()+Slash+ParamText()+Slash)
 
     # To Do: 
-    # mkdir, file editor, run/open file, shutdown/restart (without unix admin perm.),
-    # addToPath, list/dir , use cmd output as input, up arrow to use last command,
-    # variables (%var%, etc)
+    # Fix Params Dual Error Message
+    # open in text file editor, use cmd output as input, variables (%var%, etc)
 
     #=======================================================#
     #                   Help Message                        #
     #=======================================================#
 
     # [help] - Display Help Message
-    if Param(['help','/?','-h','-help','?','Help'],0):
+    if Param(['help','/?','-h','-help','?','h','-?'],0):
         if len(params) == 1: 
             dash(15,True)
             print("Commands:\n")
+            help_commands.sort()
             print(ListifyArray(help_commands))
             dash(15,True)
             print('Try Running "help [command]" for more detailed information')
