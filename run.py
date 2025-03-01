@@ -2,7 +2,7 @@
 # Created By: Phil H.
 # Github: https://github.com/MineFartS/Universal-Terminal/
 
-version = 'Beta '+str(1.7)
+version = 'Beta '+str(1.8)
 
 last_updated = '2025-02-28'
 
@@ -14,15 +14,15 @@ error = False
 try:
     try:
         import subprocess, sys, os, time, requests
-        from ping3 import ping
     except:
         import subprocess,sys,os
-        repos = ['ping']
+        repos = []
 
         args = [sys.executable,'-m','pip','install']
         for repo in repos:
             args.append(repos)
         subprocess.call(args)
+        restart()
 
     # [restart] - Restarts / Starts a new line
     Allow_Restart = True
