@@ -2,7 +2,7 @@
 # Created By: Phil H.
 # Github: https://github.com/MineFartS/Universal-Terminal/
 
-version = 'Beta '+str(1.9)
+version = 'Beta 1.10'
 
 last_updated = '2025-02-28'
 
@@ -201,9 +201,11 @@ try:
         print('Fetching latest version from github ... ')
         code = requests.get('https://raw.githubusercontent.com/MineFartS/Universal-Terminal/refs/heads/main/run.py').text
         print('Applying Update ... ')
-        open(ScriptPath,'w').write(code)
+        cwd = os.getcwd()
+        os.chdir(sys.path[0])
+        open(sys.argv[0],'w').write(code)
         print('Update Complete')
-        restart(['--hidden-exec','echo','Done'])
+        os.chdir(cwd)
 
     # [os] - Runs commands with the computer's default terminal
     if Param(['run','os','terminal','term','cmd','bash']):
