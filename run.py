@@ -2,7 +2,7 @@
 # Created By: Phil H.
 # Github: https://github.com/MineFartS/Universal-Terminal/
 
-version = 'Beta '+str(1.8)
+version = 'Beta '+str(1.9)
 
 last_updated = '2025-02-28'
 
@@ -203,6 +203,7 @@ try:
         print('Applying Update ... ')
         open(ScriptPath,'w').write(code)
         print('Update Complete')
+        restart(['--hidden-exec','echo','Done'])
 
     # [os] - Runs commands with the computer's default terminal
     if Param(['run','os','terminal','term','cmd','bash']):
