@@ -195,13 +195,13 @@ try:
         help('')
         Allow_Restart = False
 
-    # [Update] - Updates the script form GitHub
+    # [update] - Updates the script form GitHub
     if Param(['update']):
         help('')
         print('Fetching latest version from github ... ')
         code = requests.get('https://raw.githubusercontent.com/MineFartS/Universal-Terminal/refs/heads/main/run.py').text
         print('Applying Update ... ')
-        open(sys.argv[0],'w').write(code)
+        open(ScriptPath,'w').write(code)
         print('Update Complete')
 
     # [os] - Runs commands with the computer's default terminal
