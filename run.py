@@ -2,7 +2,7 @@
 # Created By: Phil H.
 # Github: https://github.com/MineFartS/Universal-Terminal/
 
-version = 'Beta 1.13'
+version = 'Beta 1.14'
 
 #=======================================================#
 #                 Initial Execution                     #
@@ -11,9 +11,10 @@ version = 'Beta 1.13'
 # Import repos & install any missing
 try:
     import subprocess, sys, os, time, requests, keyring
+    from ping3 import verbose_ping as ping
 except:
     import subprocess,sys,os
-    subprocess.call([sys.executable,'-m','pip','install','keyring','requests'])
+    subprocess.call([sys.executable,'-m','pip','install','keyring','requests','ping3'])
     subprocess.run([sys.executable, sys.argv[0]])
     exit()
 
@@ -23,13 +24,17 @@ OS = {True:'Windows',False:'Unix'}[os.name == 'nt']
 # OS Slash Type [\|/]
 Slash = {'Windows':'\\','Unix':'/'}[OS]
 
+keyring.set_password('sys','output','')
+keyring.set_password('sys','hide','False')
+
 # [log] - Print text and save as output
 def log(value):
-    print(value)
+    if keyring.get_password('sys','hide')=='False':
+        print(value)
     output = keyring.get_password('sys','output')
     if output != '':
         value = '\n' + str(value)
-    keyring.set_password('sys','output',keyring.get_password('sys','output')+str(value))
+    keyring.set_password('sys','output',output+str(value))
 
 # [dash] - Print dashes to a % of the terminal window 
 def dash(percent=100,pad=False):
@@ -42,9 +47,10 @@ if len(sys.argv) == 1:
     os.system({False:'clear',True:'cls'}[os.name == 'nt'])
     dash()
     print("\nThe Universal Terminal ("+str(version)+")\n")
+    print('Type "help" for a list of commands\n')
     dash()
 
-# Performs various tasks and checks with the passed params
+# [check] - Performs various tasks and checks with the passed params
 def check(cmd, args, params, help_mess=''):
     # Print first param if 'help --list-cmds' is run
     if cmd == 'help' and '--list-cmds' in args:
@@ -67,9 +73,9 @@ def check(cmd, args, params, help_mess=''):
 #=======================================================#
 #                  Terminal Commands                    #
 #=======================================================#
-def main(Input):
+def main(Input,hide=False):
+    keyring.set_password('sys','hide',str(hide))
     keyring.set_password('sys','output','')
-    
     # Replace any variables in input with their actual value
     if '%' in Input:
         for var in Input.split('%'):
@@ -81,7 +87,7 @@ def main(Input):
     # [about] - Displays details about this script
     params = ['about','ver','info']
     help_mess = 'Shows information about Universal Terminal'
-    if check(cmd,args,params,help_mess):    
+    if check(cmd,args,params,help_mess): 
         dash(40)
         log('The Universal Terminal')
         log('Created by Phil H.')
@@ -191,22 +197,24 @@ def main(Input):
 
     # [ping] - ping command
     params = ['ping']
-    help_mess = 'Ping an ip address\nping [# of pings] [ip address]'
+    help_mess = 'Ping an ip address\nping [ip address]\nping [# of pings] [ip address]'
     if check(cmd,args,params,help_mess):
         if len(args.split(' ')) == 1:
             c, ip = '4', args
         else:
             c, ip = args.split(' ')
-        if OS=='Windows':
-            os.system('ping -n '+c+' '+ip)
-        else:
-            os.system('ping -c '+c+' '+ip)
+        log('Pinging "'+ip+'" '+c+' times\n')
+        ping(ip,int(c))
 
-    # [wget] - download web page/file to disk
+    # [wget] - download web page/file
     params = ['wget','download','get','web','request','save']
     help_mess = 'Save web content as a local file\nwget https://google.com Google.html'
     if check(cmd,args,params,help_mess):
         website, path = args.split(' ')
+        if 'https://' in website or 'http://' in website:''
+        else:
+            website = 'http://'+ website
+        log('Saving "'+website+'" to "'+path+'"')
         open(path,'wb').write(requests.get(website).content)
 
     # [cd] - Change Directory
@@ -238,7 +246,7 @@ def main(Input):
 
     # [var] - Set User Variable
     params = ['var','const','set','let']
-    help_mess = 'Set variable\nvar hw=hello world\necho %hw%'
+    help_mess = 'Set variable value\nvar [var]=[value]\nEx: var hw=hello world && echo %hw%'
     if check(cmd,args,params,help_mess):
         var, val = args[:args.find('=')], args[args.find('=')+1:]
         keyring.set_password("user",var.strip(),val)
@@ -251,13 +259,12 @@ def main(Input):
         var, prompt = args[:args.find('=')], args[args.find('=')+1:]
         keyring.set_password("user",var.strip(),input(prompt))
     
-    # [calc] - Caculate math exquations
+    # [calc] - Caculate math equations
     params = ['calc','math']
     help_mess = 'Calculate equations\ncalc [var]=[equation]'
     if check(cmd,args,params,help_mess):
         if '=' in args: var, eq = args.split('=')
         else: eq, var = args, False
-
         if '+' in eq:
             a, b = eq.split('+')
             c = float(a) + float(b)
@@ -282,20 +289,66 @@ def main(Input):
         var, run = args[:args.find('=')], args[args.find('=')+1:]
         keyring.set_password('user',var,main(run))
         log('Saved output as "%'+var+'%"')
-    
+    """
+    params = ['copy']
+    help_mess= ''
+    if check(cmd,args,params,help_mess):
+        orig, copy = args.split('>')
+        if OS == 'Windows':
+            os.system('copy "'+orig+'" "'+copy+'"')
+        else:
+            os.system('cp -a "'+orig+'" "'+copy+'"')
+
     params = ['move','mv']
     help_mess = ''
-    #if check(cmd,args,params,help_mess):
-
+    if check(cmd,args,params,help_mess):
+        orig, copy = args.split('>')
+        if OS == 'Windows':
+            os.system('move "'+orig+'" "'+copy+'"')
+        else:
+            os.system('mv -a "'+orig+'" "'+copy+'"')
 
     params = ['rn','rename']
     help_mess = ''
 #    if check(cmd,args,params,help_mess):
 
+    params = ['for','loop']
+    help_mess = ''
+    if check(cmd,args,params,help_mess):
+        params, command = args.split(': ')
+        var, num = params.split(' in ')
+        x = 1
+        while x < int(num)+1:
+            keyring.set_password('user',str(var),str(x))
+            for c in command.split(' && '):
+                main(c)
+            x += 1
+    
+    params = ['if']
+    help_mess= ''
+    if check(cmd,args,params,help_mess):
+        params, command = args.split(': ')
+        a, b = params.split('=')
+        if a == b:
+            main(command)
+"""
+    params = ['link','mklink','junction']
+    help_mess= 'Make a symbolic link to a file or folder\nlink [source]>[shortcut]'
+    if check(cmd,args,params,help_mess):
+        orig, sym = args.split('>')
+        if '"' in orig: orig = orig.split('"')[1]
+        if '"' in sym:  sym = sym.split('"')[1]
+        if OS == 'Windows':
+            if os.path.isfile(orig):
+                os.system('mklink "'+orig+'" "'+sym+'"')
+            if os.path.isdir(orig):
+                os.system('mklink /j "'+orig+'" "'+sym+'"')
+        else:
+            os.system('ln -s "'+orig+'" "'+sym+'"')
+
     # To Do:
-    # open in text file editor, copy, find,
-    # var modification %hi:~1,1% / %hi:~/=\%,
-    # for x in y, if, mklink, time
+    # open in text file editor, find in string,
+    # text concatenation/replace/trim (%hi:~1,1% %hi:/=\% %hi%%hi%), get time/date
 
 #======================================================================
     # [help] - Display Help Message
@@ -316,14 +369,13 @@ def main(Input):
             main(args+' --help')
             log('\nAliases:')
             main(args+' --alt')
+
     return keyring.get_password('sys','output')
 #=======================================================#
 #             Input Handling & Execution                #
 #=======================================================#
-
-x = 0
-keyring.set_password('sys','x',str(x))
-while x < 1:
+keyring.set_password('sys','x','0')
+while int(keyring.get_password('sys','x')) < 1:
     if len(sys.argv) > 1:
         # If CL arguements are passed, run once with those as input
         text = ''
@@ -341,13 +393,20 @@ while x < 1:
             main(i)
         except:
             # Show error message if execution fails
+            cmd = i.split(' ')[0]
+            keyring.set_password('sys','hide','False')
+            log('\nError:')
+            log('Invalid Syntax')
+            if cmd in main('help --list-cmds',True).split('\n'):
+                main('help '+cmd)
+            else:
+                log('Run "help" for a list of Commands')
             log('')
-            dash(50)
-            log('Error: Invalid Syntax or Command')
-            log('Run "help" for a list of Commands')
+              
             dash(25)
             log('Please share any glitches or bugs on github')
             log('https://github.com/MineFartS/Universal-Terminal/')
-            dash(50)
+            dash(25)
+
     x = int(keyring.get_password('sys','x'))
 os.system({False:'clear',True:'cls'}[os.name == 'nt'])
